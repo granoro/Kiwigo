@@ -3,123 +3,203 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>商品目錄｜滑動瀏覽</title>
+  <title>LINE 圖文｜Kiwigo 目錄（縮圖＋PDF式直向瀏覽）</title>
   <style>
     :root{
-      --bg:#0b0d12;
-      --fg:#e5e7eb;
-      --muted:#9ca3af;
-      --accent:#f59e0b;
-      --chip:#1f2937;
+      --bg:#f6f7fb;       /* 背景 */
+      --panel:#ffffff;    /* 卡片底 */
+      --ink:#111827;      /* 主字色 */
+      --muted:#6b7280;    /* 次字色 */
+      --accent:#ef7f1a;   /* 品牌重點色（可調） */
+      --border:#e5e7eb;   /* 邊框 */
+      --thumb:#fafafa;    /* 縮圖底 */
     }
-    *{box-sizing:border-box;margin:0;padding:0}
+    *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
-      background:var(--bg);
-      color:var(--fg);
-      overflow:hidden;
-    }
-    header{
-      position:fixed;top:0;left:0;right:0;z-index:10;
-      background:linear-gradient(180deg, rgba(11,13,18,.92), rgba(11,13,18,.6) 60%, transparent);
-      -webkit-backdrop-filter: blur(8px);
-      backdrop-filter: blur(8px);
-      border-bottom:1px solid rgba(255,255,255,.06);
-      padding:8px 12px;
-    }
-    .cats{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-top:4px}
-    .cat{white-space:nowrap;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid rgba(255,255,255,.1);font-size:12px;flex-shrink:0;pointer-events:none}
-    .cat.active{background:var(--accent);color:#071018;border-color:transparent;font-weight:700}
-    main{position:fixed;top:60px;left:0;right:0;bottom:0}
-    .rail{height:100%;display:flex;gap:16px;padding:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;scroll-snap-type:x mandatory}
-    .page{flex:0 0 100%;height:100%;border-radius:12px;overflow:hidden;scroll-snap-align:start;position:relative;background:#000}
-    .page img{width:100%;height:100%;object-fit:contain;background:#000}
-    .nav{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none}
-    .nav button{pointer-events:auto;position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;cursor:pointer}
-    .nav .prev{left:6px}
-    .nav .next{right:6px}
-    @supports(padding:max(0px)){
-      header{padding-left:max(12px, env(safe-area-inset-left));padding-right:max(12px, env(safe-area-inset-right));}
-      .rail{padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right));}
+    body{margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial; color:var(--ink); background:var(--bg);}
+    /* 佈局 */
+    .app{display:grid; grid-template-rows:auto 1fr; height:100vh}
+    header{position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#fff, #fff0); padding:12px 16px; border-bottom:1px solid var(--border)}
+    .cats{display:flex; gap:10px; overflow:auto; padding-bottom:4px}
+    .cats::-webkit-scrollbar{display:none}
+    .cat{padding:8px 14px; font-size:14px; border-radius:999px; background:#eceff3; color:#334155; border:1px solid var(--border); user-select:none; white-space:nowrap}
+    .cat.active{background:var(--accent); color:#0b0d12; border-color:transparent; font-weight:700}
+    .shell{display:grid; grid-template-columns:280px 1fr; gap:16px; padding:16px; height:calc(100vh - 56px);}
+
+    /* 左側縮圖欄（桌面） */
+    aside{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:12px; overflow:auto}
+    .thumb{display:grid; grid-template-columns:64px 1fr; gap:10px; align-items:center; padding:8px; border-radius:10px; border:1px solid transparent; cursor:pointer}
+    .thumb:hover{background:#f7f7f9; border-color:var(--border)}
+    .thumb.active{background:#fff7f0; border-color:#fed7aa}
+    .thumb img{width:64px; height:64px; object-fit:cover; background:var(--thumb); border-radius:8px; border:1px solid var(--border)}
+    .thumb .t1{font-weight:700; font-size:13px; color:#111827}
+    .thumb .t2{font-size:12px; color:var(--muted)}
+
+    /* 右側檢視：PDF式直向滑 */
+    .viewer{background:var(--panel); border:1px solid var(--border); border-radius:16px; display:grid; grid-template-rows:48px 1fr 56px; min-height:0}
+    .viewer .bar{display:flex; align-items:center; gap:10px; padding:0 12px; border-bottom:1px solid var(--border)}
+    .viewer .bar .sp{flex:1}
+    .viewer .bar .pill{font-size:12px; color:var(--muted)}
+    .stage{position:relative; overflow:auto; padding:16px; display:flex; flex-direction:column; gap:16px; background:#11182710; scroll-snap-type:y mandatory}
+    .page{height:calc(100% - 0px); min-height:calc(100vh - 56px - 48px - 56px - 32px); /* 視窗高 - header - bar - dock - padding */ border-radius:12px; overflow:hidden; background:#fff; border:1px solid var(--border); box-shadow:0 6px 24px rgba(0,0,0,.06); scroll-snap-align:start; display:grid; place-items:center}
+    .page img{width:100%; height:100%; object-fit:contain; background:#fff}
+
+    .dock{display:flex; align-items:center; justify-content:center; gap:12px; border-top:1px solid var(--border); padding:8px}
+    .btn{appearance:none; border:1px solid var(--border); background:#fff; padding:10px 14px; border-radius:10px; cursor:pointer}
+    .btn--accent{background:var(--accent); color:#0b0d12; border-color:#0000; font-weight:700}
+
+    /* 手機：隱藏縮圖，滿版直向滑 */
+    @media (max-width: 900px){
+      .shell{grid-template-columns:1fr; gap:0; padding:0 0 8px 0; height:calc(100vh - 56px)}
+      aside{display:none}
+      .viewer{border-radius:0; border-left:0; border-right:0}
+      .stage{padding:8px}
+      .page{min-height:calc(100vh - 56px - 48px - 56px - 16px)}
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="cats" id="cats"></div>
-  </header>
-  <main>
-    <div class="rail" id="rail"></div>
-  </main>
-  <div class="nav" aria-hidden="true">
-    <button class="prev" id="prevBtn">◀</button>
-    <button class="next" id="nextBtn">▶</button>
-  </div>
-  <script>
-    const PAGES = [
-        {src:'images/01-麵食專區.png', cat:'麵食專區'},
-        {src:'images/02-麵食專區.png', cat:'麵食專區'},
-        {src:'images/03-麵食專區.png', cat:'麵食專區'},
-        {src:'images/01-罐頭食材.png', cat:'罐頭食材'},
-        {src:'images/02-罐頭食材.png', cat:'罐頭食材'},
-        {src:'images/01-調味醬料.png', cat:'調味醬料'},
-        {src:'images/01-烘焙原料.png', cat:'烘焙原料'},
-        {src:'images/01-飲品原料.png', cat:'飲品原料'},
-        {src:'images/01-堅果果乾.png', cat:'堅果果乾'}
-    ];
-    const rail=document.getElementById('rail');
-    const cats=document.getElementById('cats');
-    const prevBtn=document.getElementById('prevBtn');
-    const nextBtn=document.getElementById('nextBtn');
+  <div class="app">
+    <header>
+      <div class="cats" id="cats"></div>
+    </header>
 
-    function renderPages(){
-      rail.innerHTML='';
-      PAGES.forEach((p,i)=>{
-        const sec=document.createElement('section');
-        sec.className='page';
-        sec.innerHTML=`<img src="${p.src}" alt="${p.cat}">`;
-        rail.appendChild(sec);
-      });
+    <div class="shell">
+      <aside id="thumbs" aria-label="縮圖清單"></aside>
+
+      <section class="viewer">
+        <div class="bar">
+          <strong id="title">Kiwigo 商品目錄</strong>
+          <span class="sp"></span>
+          <span class="pill">第 <b id="cur">1</b> / <span id="tot">1</span> 頁</span>
+        </div>
+        <div class="stage" id="stage" aria-live="polite"></div>
+        <div class="dock">
+          <button class="btn" id="prev">上一頁</button>
+          <button class="btn btn--accent" id="next">下一頁</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+  // ===== 填入你的圖片清單（放在 /images/，每頁只屬一個章節；分類不可點、只做章節進度） =====
+  const PAGES = [
+    { src:'images/01-麵食專區.png',   cat:'麵食專區',   name:'麵食 01' },
+    { src:'images/02-麵食專區.png',   cat:'麵食專區',   name:'麵食 02' },
+    { src:'images/03-麵食專區.png',   cat:'麵食專區',   name:'麵食 03' },
+    { src:'images/01-罐頭食材.png',   cat:'罐頭食材',   name:'罐頭 01' },
+    { src:'images/02-罐頭食材.png',   cat:'罐頭食材',   name:'罐頭 02' },
+    { src:'images/01-調味醬料.png',   cat:'調味醬料',   name:'調味 01' },
+    { src:'images/01-烘焙原料.png',   cat:'烘焙原料',   name:'烘焙 01' },
+    { src:'images/01-飲品原料.png',   cat:'飲品原料',   name:'飲品 01' },
+    { src:'images/01-堅果果乾.png',   cat:'堅果果乾',   name:'堅果 01' },
+  ];
+
+  // ===== 元件 =====
+  const catsEl   = document.getElementById('cats');
+  const thumbsEl = document.getElementById('thumbs');
+  const stage    = document.getElementById('stage');
+  const curEl    = document.getElementById('cur');
+  const totEl    = document.getElementById('tot');
+  const prevBtn  = document.getElementById('prev');
+  const nextBtn  = document.getElementById('next');
+  totEl.textContent = PAGES.length;
+
+  // 章節列（純顯示）
+  function renderCats(){
+    const groups = [];
+    PAGES.forEach(p=>{ if(p.cat && !groups.includes(p.cat)) groups.push(p.cat) });
+    catsEl.innerHTML = groups.map(c=>`<div class="cat" data-cat="${c}">${c}</div>`).join('');
+  }
+
+  // 左側縮圖
+  function renderThumbs(){
+    thumbsEl.innerHTML = PAGES.map((p,i)=>`
+      <div class="thumb" data-idx="${i}">
+        <img src="${p.src}" alt="${p.name||''}">
+        <div>
+          <div class="t1">${p.name || `第 ${i+1} 頁`}</div>
+          <div class="t2">${p.cat || ''}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // 右側直向頁面
+  function renderPages(){
+    stage.innerHTML = PAGES.map((p,i)=>`
+      <div class="page" data-idx="${i}">
+        <img loading="lazy" src="${p.src}" alt="${p.name||''}">
+      </div>
+    `).join('');
+  }
+
+  function setActiveCat(cat){
+    [...catsEl.children].forEach(el=> el.classList.toggle('active', el.dataset.cat===cat));
+    const active=[...catsEl.children].find(el=>el.dataset.cat===cat);
+    if(active){
+      catsEl.scrollTo({left: active.offsetLeft - catsEl.clientWidth/2 + active.clientWidth/2, behavior:'smooth'});
     }
-    function renderCats(){
-      cats.innerHTML='';
-      const uniqueCats=[...new Set(PAGES.map(p=>p.cat))];
-      uniqueCats.forEach(c=>{
-        const el=document.createElement('div');
-        el.className='cat';
-        el.textContent=c;
-        cats.appendChild(el);
-      });
-    }
-    function getActiveIndex(){
-      const slides=[...rail.children];
-      const rect=rail.getBoundingClientRect();
-      const x=rail.scrollLeft+rect.width/2;
-      let acc=0,idx=0;
-      slides.forEach((el,i)=>{if(x>=acc){idx=i;}acc+=el.offsetWidth+16;});
-      return Math.min(idx,slides.length-1);
-    }
-    function updateActiveCat(){
-      const idx=getActiveIndex();
-      const cat=PAGES[idx].cat;
-      [...cats.children].forEach(el=>el.classList.toggle('active',el.textContent===cat));
-    }
-    function snapTo(index){
-      const slides=[...rail.children];
-      const el=slides[Math.max(0,Math.min(index,slides.length-1))];
-      el?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});
-      setTimeout(updateActiveCat,250);
-    }
-    rail.addEventListener('scroll',()=>{
-      if(window.__dotTimer)cancelAnimationFrame(window.__dotTimer);
-      window.__dotTimer=requestAnimationFrame(updateActiveCat);
-    });
-    prevBtn.addEventListener('click',()=>snapTo(getActiveIndex()-1));
-    nextBtn.addEventListener('click',()=>snapTo(getActiveIndex()+1));
-    renderPages();
-    renderCats();
-    updateActiveCat();
+  }
+
+  // 取目前所在頁（用容器中心點計算）
+  function getActiveIndex(){
+    const slides=[...stage.children];
+    const rect=stage.getBoundingClientRect();
+    const y=stage.scrollTop + rect.height/2;
+    let acc=0, idx=0;
+    slides.forEach((el,i)=>{ if(y>=acc){ idx=i; } acc+=el.offsetHeight+16; });
+    return Math.min(idx, slides.length-1);
+  }
+
+  function updateUI(){
+    const idx = getActiveIndex();
+    const p   = PAGES[idx];
+    curEl.textContent = idx+1;
+    setActiveCat(p.cat || '');
+    // 縮圖活躍
+    [...thumbsEl.children].forEach((el,ii)=> el.classList.toggle('active', ii===idx));
+    const active = thumbsEl.querySelector(`[data-idx="${idx}"]`);
+    if(active){ thumbsEl.scrollTo({ top: active.offsetTop - 120, behavior:'smooth'}); }
+  }
+
+  function scrollToIndex(i){
+    const pages=[...stage.children];
+    const el = pages[Math.max(0, Math.min(i, pages.length-1))];
+    el?.scrollIntoView({behavior:'smooth', block:'start'});
+    setTimeout(updateUI, 250);
+  }
+
+  // 綁事件
+  thumbsEl.addEventListener('click', (e)=>{
+    const t = e.target.closest('.thumb');
+    if(t){ scrollToIndex(parseInt(t.dataset.idx,10)); }
+  });
+  prevBtn.addEventListener('click', ()=> scrollToIndex(getActiveIndex()-1));
+  nextBtn.addEventListener('click', ()=> scrollToIndex(getActiveIndex()+1));
+  stage.addEventListener('scroll', ()=>{
+    if(window.__raf) cancelAnimationFrame(window.__raf);
+    window.__raf = requestAnimationFrame(updateUI);
+  });
+  window.addEventListener('keydown', (e)=>{
+    if(e.key==='ArrowDown' || e.key==='PageDown') scrollToIndex(getActiveIndex()+1);
+    if(e.key==='ArrowUp'   || e.key==='PageUp')   scrollToIndex(getActiveIndex()-1);
+    if(e.key==='Home') scrollToIndex(0);
+    if(e.key==='End')  scrollToIndex(PAGES.length-1);
+  });
+
+  renderCats();
+  renderThumbs();
+  renderPages();
+  updateUI();
+
+  /* 使用方式（給你）：
+   1) 圖片丟 /images/；建議直式 1080×1920、單張 < 500KB（JPG/PNG）。
+   2) 依照你的規則命名：01-麵食專區.png、02-麵食專區.png、01-罐頭食材.png ...
+   3) 在 PAGES 只要新增一行 { src:'images/檔名.png', cat:'章節', name:'可選頁名' } 就好。
+   4) 章節膠囊不可點，純進度提示；縮圖可點（桌面友善）。
+  */
   </script>
 </body>
 </html>
