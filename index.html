@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>商品目錄｜滑動瀏覽</title>
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --fg:#e5e7eb;
+      --muted:#9ca3af;
+      --accent:#f59e0b;
+      --chip:#1f2937;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
+      background:var(--bg);
+      color:var(--fg);
+      overflow:hidden;
+    }
+    header{
+      position:fixed;top:0;left:0;right:0;z-index:10;
+      background:linear-gradient(180deg, rgba(11,13,18,.92), rgba(11,13,18,.6) 60%, transparent);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      padding:8px 12px;
+    }
+    .cats{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-top:4px}
+    .cat{white-space:nowrap;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid rgba(255,255,255,.1);font-size:12px;flex-shrink:0;pointer-events:none}
+    .cat.active{background:var(--accent);color:#071018;border-color:transparent;font-weight:700}
+    main{position:fixed;top:60px;left:0;right:0;bottom:0}
+    .rail{height:100%;display:flex;gap:16px;padding:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;scroll-snap-type:x mandatory}
+    .page{flex:0 0 100%;height:100%;border-radius:12px;overflow:hidden;scroll-snap-align:start;position:relative;background:#000}
+    .page img{width:100%;height:100%;object-fit:contain;background:#000}
+    .nav{position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none}
+    .nav button{pointer-events:auto;position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#fff;cursor:pointer}
+    .nav .prev{left:6px}
+    .nav .next{right:6px}
+    @supports(padding:max(0px)){
+      header{padding-left:max(12px, env(safe-area-inset-left));padding-right:max(12px, env(safe-area-inset-right));}
+      .rail{padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right));}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="cats" id="cats"></div>
+  </header>
+  <main>
+    <div class="rail" id="rail"></div>
+  </main>
+  <div class="nav" aria-hidden="true">
+    <button class="prev" id="prevBtn">◀</button>
+    <button class="next" id="nextBtn">▶</button>
+  </div>
+  <script>
+    const PAGES = [
+        {src:'images/01-麵食專區.png', cat:'麵食專區'},
+        {src:'images/02-麵食專區.png', cat:'麵食專區'},
+        {src:'images/03-麵食專區.png', cat:'麵食專區'},
+        {src:'images/01-罐頭食材.png', cat:'罐頭食材'},
+        {src:'images/02-罐頭食材.png', cat:'罐頭食材'},
+        {src:'images/01-調味醬料.png', cat:'調味醬料'},
+        {src:'images/01-烘焙原料.png', cat:'烘焙原料'},
+        {src:'images/01-飲品原料.png', cat:'飲品原料'},
+        {src:'images/01-堅果果乾.png', cat:'堅果果乾'}
+    ];
+    const rail=document.getElementById('rail');
+    const cats=document.getElementById('cats');
+    const prevBtn=document.getElementById('prevBtn');
+    const nextBtn=document.getElementById('nextBtn');
+
+    function renderPages(){
+      rail.innerHTML='';
+      PAGES.forEach((p,i)=>{
+        const sec=document.createElement('section');
+        sec.className='page';
+        sec.innerHTML=`<img src="${p.src}" alt="${p.cat}">`;
+        rail.appendChild(sec);
+      });
+    }
+    function renderCats(){
+      cats.innerHTML='';
+      const uniqueCats=[...new Set(PAGES.map(p=>p.cat))];
+      uniqueCats.forEach(c=>{
+        const el=document.createElement('div');
+        el.className='cat';
+        el.textContent=c;
+        cats.appendChild(el);
+      });
+    }
+    function getActiveIndex(){
+      const slides=[...rail.children];
+      const rect=rail.getBoundingClientRect();
+      const x=rail.scrollLeft+rect.width/2;
+      let acc=0,idx=0;
+      slides.forEach((el,i)=>{if(x>=acc){idx=i;}acc+=el.offsetWidth+16;});
+      return Math.min(idx,slides.length-1);
+    }
+    function updateActiveCat(){
+      const idx=getActiveIndex();
+      const cat=PAGES[idx].cat;
+      [...cats.children].forEach(el=>el.classList.toggle('active',el.textContent===cat));
+    }
+    function snapTo(index){
+      const slides=[...rail.children];
+      const el=slides[Math.max(0,Math.min(index,slides.length-1))];
+      el?.scrollIntoView({behavior:'smooth',block:'nearest',inline:'nearest'});
+      setTimeout(updateActiveCat,250);
+    }
+    rail.addEventListener('scroll',()=>{
+      if(window.__dotTimer)cancelAnimationFrame(window.__dotTimer);
+      window.__dotTimer=requestAnimationFrame(updateActiveCat);
+    });
+    prevBtn.addEventListener('click',()=>snapTo(getActiveIndex()-1));
+    nextBtn.addEventListener('click',()=>snapTo(getActiveIndex()+1));
+    renderPages();
+    renderCats();
+    updateActiveCat();
+  </script>
+</body>
+</html>
