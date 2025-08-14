@@ -3,213 +3,103 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Kiwigo 商品目錄｜章節木紋版</title>
+<title>Kiwigo 商品目錄｜長圖版</title>
 <style>
   :root{
-    --bg1:#f4f6fb; --bg2:#eef1f6;
-    --paper:#ffffff; --ink:#0f172a; --muted:#6b7280; --border:#e7e9ee;
-    --accent:#d38b3a;
+    --page-bg:#f5f6f8;   /* 固定淡灰白，無漸層 */
+    --paper:#ffffff;
+    --shadow:0 12px 30px rgba(15,23,42,.12);
+    --border:#e8eaef;
+    --accent:#8a4b15;
   }
+
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; color:var(--ink);
+    margin:0;
+    background:var(--page-bg);        /* ✅ 去掉漸層，改固定色 */
+    color:#0f172a;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
-    background:linear-gradient(180deg, var(--bg1), var(--bg2));
-    position:relative;
   }
-  /* 背景圖淡化，不搶主視覺 */
+  /* 背景木紋/葉子（如果不想要就把整段註解掉） */
   body::before{
-    content:""; position:fixed; inset:0; z-index:-1;
+    content:"";
+    position:fixed; inset:0; z-index:-1;
     background:url("images/background.png") center/cover no-repeat fixed;
-    opacity:.16;
+    opacity:.22;
   }
 
-  /* 版面比例：側欄維持原本視覺（不縮小）、右邊放大可視區 */
-  .layout{
-    height:100vh; display:grid;
-    grid-template-columns: 260px 1fr;
+  /* ===== 版心（電腦縮小看看更多） ===== */
+  .wrap{
+    max-width: 960px;                /* ✅ 電腦版縮小（原本 1180 左右） */
+    margin: 24px auto 80px;
+    padding: 0 12px;                 /* 邊界留點空氣 */
+  }
+  .sheet{
+    background:var(--paper);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .sheet img{
+    display:block;
+    width:100%;      /* 由容器控制大小，這樣電腦版會較小 */
+    height:auto;     /* 不變形 */
   }
 
-  /* 側欄：僅顯示，不可點 */
-  aside{
-    position:sticky; top:0; height:100vh; overflow:auto; z-index:2;
-    background:linear-gradient(180deg,#fffffff0,#ffffffcc);
-    backdrop-filter:saturate(120%) blur(6px);
-    border-right:1px solid var(--border); padding:22px 18px 18px;
+  /* ===== 回到頂部（更顯眼） ===== */
+  .toTop{
+    position:fixed; right:16px; bottom:16px; z-index:20;
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.95);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:12px 14px;
+    box-shadow:0 8px 22px rgba(0,0,0,.12);
+    color:#374151; font-weight:800; letter-spacing:.02em;
+    cursor:pointer;
+    transform:translateY(30px);
+    opacity:0; pointer-events:none;
+    transition:.25s ease;
   }
-  .brand{margin:0 6px 16px}
-  .brand .k{font-weight:1000; font-size:32px; letter-spacing:.03em; line-height:1.06; margin-bottom:6px;}
-  .brand .s{font-weight:900; font-size:22px;  letter-spacing:.06em; color:#1f2937; opacity:.9;}
+  .toTop.show{ transform:translateY(0); opacity:1; pointer-events:auto; }
+  .toTop i{ font-style:normal; font-weight:900; color:var(--accent) }
 
-  .cats{display:flex; flex-direction:column; gap:8px}
-  .cat{
-    display:flex; align-items:center; gap:10px; padding:8px 6px 8px 10px;
-    color:#1f2937; border-left:3px solid transparent; transition:.18s;
-    border-radius:8px;
-    pointer-events:none; user-select:none; cursor:default;   /* 不可點 */
+  /* ===== 手機優化 ===== */
+  @media (max-width: 900px){
+    .wrap{ max-width: 100%; margin: 12px auto 72px; padding: 0 8px; }
+    .sheet{ border-radius:12px; }
+    .toTop{ right:12px; bottom:12px; padding:10px 12px; }
   }
-  .cat .lead{width:6px;height:6px;border-radius:50%;background:#d1d5db}
-  .cat .tag{font-weight:800;letter-spacing:.02em}
-  .cat.active{border-left-color:var(--accent); color:#8a4700; background:#fff3e1}
-  .cat.active .lead{background:currentColor}
-
-  /* 主舞台：縮小左右邊距 + 較薄卡片，圖片可視高度更大 */
-  main#stage{
-    height:100vh; overflow:auto; -webkit-overflow-scrolling:touch;
-    scroll-snap-type:y proximity;
-    padding-inline: clamp(8px, 2.2vw, 24px);
-  }
-  .page{
-    scroll-snap-align:start; min-height:100vh;
-    display:grid; place-items:start center; padding:16px 0 22px;
-  }
-
-  /* 大而清楚的章節橫幅（不占太多高度） */
-  .banner{
-    display:block; margin:0 auto 10px;
-    padding:14px 18px; text-align:center;
-    border-radius:12px; font-weight:1000; letter-spacing:.06em;
-    font-size:26px; width:min(1200px,100%);
-    color:#5a3825; background:#fff;
-    border:1px solid rgba(0,0,0,.06);
-    box-shadow: 0 4px 12px rgba(0,0,0,.10), inset 0 1px 0 rgba(255,255,255,.85);
-  }
-
-  /* 卡片更薄邊框、更小內距，讓圖片更大 */
-  .card{
-    width:min(1200px, 100%);
-    background:var(--paper); border:1px solid var(--border); border-radius:12px;
-    box-shadow:0 8px 22px rgba(15,23,42,.07);
-    padding:10px; margin:0 auto;
-    opacity:0; transform:translateY(8px); transition:opacity .28s ease, transform .28s ease;
-  }
-  .card.reveal{opacity:1; transform:translateY(0)}
-
-  /* 圖片高度提高：一屏能看到更多內容 */
-  .card img{
-    display:block; margin:0 auto;
-    max-width:100%;
-    max-height: calc(100vh - 160px); /* 原本更矮 → 提高可視高度 */
-    width:auto; height:auto; object-fit:contain; background:#fff;
-  }
-
-  /* 手機：維持大圖觀感，隱藏側欄 */
-  @media (max-width:900px){
-    .layout{grid-template-columns:1fr}
-    aside{display:none}
-    main#stage{padding-inline:10px}
-    .banner{font-size:22px; padding:12px 14px}
-    .card{padding:8px}
-    .card img{max-height: calc(100vh - 140px);}
-  }
-
-  /* 捲軸美化（桌機） */
-  #stage{scrollbar-color:#c9d1e6 transparent}
-  #stage::-webkit-scrollbar{width:10px}
-  #stage::-webkit-scrollbar-thumb{background:#c9d1e6;border-radius:20px}
-  #stage::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
-  <div class="layout">
-    <aside>
-      <div class="brand">
-        <div class="k">Kiwigo</div>
-        <div class="s">商品目錄</div>
-      </div>
-      <div class="cats" id="cats"></div>
-    </aside>
 
-    <main id="stage"></main>
-  </div>
+  <main class="wrap">
+    <div class="sheet">
+      <!-- ✅ 把你的長圖檔名放這裡 -->
+      <img src="images/catalog-long.png" alt="Kiwigo 商品目錄" loading="eager">
+    </div>
+  </main>
+
+  <!-- ✅ 更顯眼的回到頂部 -->
+  <button class="toTop" id="toTop" aria-label="回到頂部">
+    <i>▲</i> 回到最上面
+  </button>
 
 <script>
-/* ===== 資料 ===== */
-const PAGES = [
-  { src:'images/01-麵食專區.png', cat:'麵食專區' },
-  { src:'images/02-麵食專區.png', cat:'麵食專區' },
-  { src:'images/03-麵食專區.png', cat:'麵食專區' },
-  { src:'images/01-罐頭食材.png', cat:'罐頭食材' },
-  { src:'images/02-罐頭食材.png', cat:'罐頭食材' },
-  { src:'images/01-調味醬料.png', cat:'調味醬料' },
-  { src:'images/01-烘焙原料.png', cat:'烘焙原料' },
-  { src:'images/01-飲品原料.png', cat:'飲品原料' },
-  { src:'images/01-堅果果乾.png', cat:'堅果果乾' },
-];
+  // 顯示/隱藏「回到最上面」
+  const toTop = document.getElementById('toTop');
+  const toggleTopBtn = () => {
+    if (window.scrollY > 300) toTop.classList.add('show');
+    else toTop.classList.remove('show');
+  };
+  toggleTopBtn();
+  window.addEventListener('scroll', toggleTopBtn, {passive:true});
+  toTop.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
 
-const stage  = document.getElementById('stage');
-const catsEl = document.getElementById('cats');
-
-/* ===== 內容渲染（回到大橫幅） ===== */
-stage.innerHTML = PAGES.map((p,i)=>`
-  <section class="page" data-idx="${i}" data-cat="${p.cat}" id="page-${i}">
-    <div class="banner">${p.cat}</div>
-    <div class="card">
-      <img id="img${i}" loading="lazy" src="${p.src}" alt="${p.cat}" onerror="tryJpg(${i}, '${p.src}')">
-    </div>
-  </section>
-`).join('');
-
-/* 類別清單（不可點，只顯示高亮） */
-const groups=[...new Set(PAGES.map(p=>p.cat))];
-catsEl.innerHTML  = groups.map(c=>`<div class="cat" data-cat="${c}"><span class="lead"></span><span class="tag">${c}</span></div>`).join('');
-
-/* 失敗改找 .jpg */
-function tryJpg(i, original){
-  if(original.toLowerCase().endsWith('.png')){
-    const el=document.getElementById('img'+i);
-    el.onerror=()=>{}; el.src=original.replace(/\.png$/i,'.jpg');
-  }
-}
-
-/* 高亮工具（純顯示，不可點） */
-const catNodes=[...catsEl.children];
-function highlight(cat){
-  catNodes.forEach(n=>n.classList.toggle('active', n.dataset.cat===cat));
-}
-
-/* 交會觀察 + 滾動回饋：自動高亮目前章節 */
-const io=new IntersectionObserver((entries)=>{
-  let best=null,bestDist=1e9,vh=stage.clientHeight;
-  entries.forEach(e=>{
-    if(e.isIntersecting){ e.target.querySelector('.card')?.classList.add('reveal'); }
-    const r=e.target.getBoundingClientRect();
-    const d=Math.abs((r.top+r.bottom)/2 - (stage.getBoundingClientRect().top + vh/2));
-    if(d<bestDist){bestDist=d;best=e.target;}
-  });
-  if(best) highlight(best.dataset.cat||'');
-},{root:stage,threshold:[0.4]});
-document.querySelectorAll('.page').forEach(p=>io.observe(p));
-
-stage.addEventListener('scroll',()=>{
-  if(window.__raf) cancelAnimationFrame(window.__raf);
-  window.__raf=requestAnimationFrame(()=>{
-    const pages=[...document.querySelectorAll('.page')];
-    const mid=stage.scrollTop+stage.clientHeight/2;
-    let best=null,bestDist=1e9,acc=0;
-    for(const el of pages){
-      const h=el.offsetHeight, center=acc+h/2, d=Math.abs(center-mid);
-      if(d<bestDist){bestDist=d;best=el}
-      acc+=h;
-    }
-    if(best){
-      highlight(best.dataset.cat||'');
-      best.querySelector('.card')?.classList.add('reveal');
-    }
-  });
-});
-
-/* 在外層滾輪也直接捲主舞台，避免捲到整頁 */
-document.addEventListener('wheel',(e)=>{
-  if(!e.target.closest('#stage')){
-    stage.scrollBy({top:e.deltaY,left:0,behavior:'auto'});
-    e.preventDefault();
-  }
-},{passive:false});
-
-/* 初始高亮 */
-highlight(PAGES[0]?.cat||'');
+  // 🔇 已移除放大鏡功能（縮放），避免只放大左上且被裁切的情況
 </script>
 </body>
 </html>
