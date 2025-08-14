@@ -6,7 +6,8 @@
 <title>Kiwigo 商品目錄｜長圖版</title>
 <style>
   :root{
-    --page-bg:#f5f6f8;   /* 固定淡灰白，無漸層 */
+    --page-bg:#f5f6f8;         /* 固定淡灰白背景（沒有漸層） */
+    --desktop-width: 780px;    /* ✅ 電腦版圖片最大寬度，想再小就改這裡 */
     --paper:#ffffff;
     --shadow:0 12px 30px rgba(15,23,42,.12);
     --border:#e8eaef;
@@ -17,11 +18,11 @@
   html,body{height:100%}
   body{
     margin:0;
-    background:var(--page-bg);        /* ✅ 去掉漸層，改固定色 */
+    background:var(--page-bg);
     color:#0f172a;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
   }
-  /* 背景木紋/葉子（如果不想要就把整段註解掉） */
+  /* 背景木紋/葉子（不要的話把整段註解掉） */
   body::before{
     content:"";
     position:fixed; inset:0; z-index:-1;
@@ -29,11 +30,11 @@
     opacity:.22;
   }
 
-  /* ===== 版心（電腦縮小看看更多） ===== */
+  /* ===== 版心（電腦縮小看更多） ===== */
   .wrap{
-    max-width: 960px;                /* ✅ 電腦版縮小（原本 1180 左右） */
+    max-width: var(--desktop-width);   /* ✅ 用變數控寬度 */
     margin: 24px auto 80px;
-    padding: 0 12px;                 /* 邊界留點空氣 */
+    padding: 0 12px;                   /* 邊界留點空氣 */
   }
   .sheet{
     background:var(--paper);
@@ -44,7 +45,7 @@
   }
   .sheet img{
     display:block;
-    width:100%;      /* 由容器控制大小，這樣電腦版會較小 */
+    width:100%;      /* 由容器控制大小，桌機就照 --desktop-width */
     height:auto;     /* 不變形 */
   }
 
@@ -99,7 +100,7 @@
   window.addEventListener('scroll', toggleTopBtn, {passive:true});
   toTop.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
 
-  // 🔇 已移除放大鏡功能（縮放），避免只放大左上且被裁切的情況
+  // ✅ 已移除放大鏡功能，避免只放大左上角被裁切的情況
 </script>
 </body>
 </html>
