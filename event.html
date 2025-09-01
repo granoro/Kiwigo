@@ -5,35 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Kiwigo 活動專區</title>
 <style>
+  :root{
+    --page-bg:#f5f6f8;         /* 淡灰白背景 */
+    --desktop-width: 780px;    /* ✅ 電腦版最大寬度 */
+    --paper:#ffffff;
+    --shadow:0 12px 30px rgba(15,23,42,.12);
+    --border:#e8eaef;
+    --accent:#8a4b15;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
   body{
-    margin:0; background:#f5f6f8;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC",Arial;
-    display:flex; justify-content:center; align-items:flex-start;
-    min-height:100vh;
+    margin:0;
+    background:var(--page-bg);
+    color:#0f172a;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
+  }
+
+  /* ✅ 背景木紋/葉子（event 也能有一點質感） */
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:-1;
+    background:url("images/background.png") center/cover no-repeat fixed;
+    opacity:.22;
+  }
+
+  /* 版心：限制圖片大小，桌機小一點 */
+  .wrap{
+    max-width: var(--desktop-width);
+    margin: 24px auto 80px;
+    padding: 0 12px;
   }
   .sheet{
-    max-width:900px;  /* 控制電腦版大小 */
-    margin:20px auto;
-    background:#fff; border-radius:12px; overflow:hidden;
-    box-shadow:0 8px 20px rgba(0,0,0,.08);
+    background:var(--paper);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
   }
-  .sheet img{ display:block; width:100%; height:auto; }
-  .back{
-    position:fixed; top:16px; left:16px;
-    background:#fff; border:1px solid #ddd; border-radius:8px;
-    padding:8px 12px; font-size:14px; font-weight:600;
-    text-decoration:none; color:#333;
-    box-shadow:0 4px 12px rgba(0,0,0,.1);
+  .sheet img{
+    display:block;
+    width:100%;
+    height:auto;
+  }
+
+  /* 回到頂部（保留，因為活動 DM 也會長） */
+  .toTop{
+    position:fixed; right:16px; bottom:16px; z-index:20;
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.95);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:12px 14px;
+    box-shadow:0 8px 22px rgba(0,0,0,.12);
+    color:#374151; font-weight:800; letter-spacing:.02em;
+    cursor:pointer;
+    transform:translateY(30px);
+    opacity:0; pointer-events:none;
+    transition:.25s ease;
+  }
+  .toTop.show{ transform:translateY(0); opacity:1; pointer-events:auto; }
+  .toTop i{ font-style:normal; font-weight:900; color:var(--accent) }
+
+  @media (max-width: 900px){
+    .wrap{ max-width: 100%; margin: 12px auto 72px; padding: 0 8px; }
+    .sheet{ border-radius:12px; }
+    .toTop{ right:12px; bottom:12px; padding:10px 12px; }
   }
 </style>
 </head>
 <body>
-  <!-- 返回商品目錄 -->
-  <a href="index.html" class="back">← 回商品目錄</a>
 
-  <div class="sheet">
-    <!-- ✅ 把活動圖放這裡 -->
-    <img src="images/event.png" alt="Kiwigo 活動 DM">
-  </div>
+  <main class="wrap">
+    <div class="sheet">
+      <!-- ✅ 活動圖放這裡 -->
+      <img src="images/event.png" alt="Kiwigo 活動 DM" loading="eager">
+    </div>
+  </main>
+
+  <!-- 回到最上面 -->
+  <button class="toTop" id="toTop" aria-label="回到頂部">
+    <i>▲</i> 回到最上面
+  </button>
+
+<script>
+  const toTop = document.getElementById('toTop');
+  const toggleTopBtn = () => {
+    if (window.scrollY > 300) toTop.classList.add('show');
+    else toTop.classList.remove('show');
+  };
+  toggleTopBtn();
+  window.addEventListener('scroll', toggleTopBtn, {passive:true});
+  toTop.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
+</script>
 </body>
 </html>
