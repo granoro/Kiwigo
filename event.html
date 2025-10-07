@@ -7,11 +7,14 @@
 <style>
   :root{
     --page-bg:#f5f6f8;         /* 淡灰白背景 */
-    --desktop-width: 780px;    /* ✅ 電腦版最大寬度 */
+    --desktop-width: 780px;    /* ✅ 桌機最大寬度 */
     --paper:#ffffff;
     --shadow:0 12px 30px rgba(15,23,42,.12);
+    --shadow-light:0 6px 18px rgba(15,23,42,.08); /* 👈 卡片陰影（較淺） */
     --border:#e8eaef;
     --accent:#8a4b15;
+    --gap:20px;                /* 卡片之間的間距 */
+    --radius:14px;             /* 卡片圓角 */
   }
 
   *{box-sizing:border-box}
@@ -23,7 +26,7 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Helvetica Neue",Arial;
   }
 
-  /* ✅ 背景木紋/葉子（event 也能有一點質感） */
+  /* ✅ 背景木紋/葉子質感 */
   body::before{
     content:"";
     position:fixed; inset:0; z-index:-1;
@@ -31,26 +34,49 @@
     opacity:.22;
   }
 
-  /* 版心：限制圖片大小，桌機小一點 */
+  /* 版心 */
   .wrap{
     max-width: var(--desktop-width);
     margin: 24px auto 80px;
     padding: 0 12px;
   }
+
+  /* 外層紙張 */
   .sheet{
     background:var(--paper);
     border:1px solid var(--border);
     border-radius:14px;
     box-shadow:var(--shadow);
-    overflow:hidden;
+    padding: 16px;            /* 👈 內距，讓卡片不貼邊 */
   }
-  .sheet img{
+
+  /* ✅ 活動卡片：一張圖 = 一個獨立區塊 */
+  .event-card{
+    border:1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-light);
+    background:#fff;
+    overflow:hidden;          /* 圖片圓角跟著裁切 */
+    margin-bottom: var(--gap);
+  }
+  .event-card img{
     display:block;
     width:100%;
     height:auto;
   }
 
-  /* 回到頂部（保留，因為活動 DM 也會長） */
+  /* 最後一張不要多餘間距 */
+  .event-card:last-child{ margin-bottom:0 }
+
+  /* 可選：分隔條（如果想更明顯，可把 .event-sep 打開用） */
+  /* .event-sep{
+    height: 16px;
+    background: linear-gradient(180deg,#fff,transparent);
+    margin: -8px 0 var(--gap);
+    opacity:.6;
+  } */
+
+  /* 回到頂部 */
   .toTop{
     position:fixed; right:16px; bottom:16px; z-index:20;
     display:flex; align-items:center; gap:8px;
@@ -70,8 +96,9 @@
 
   @media (max-width: 900px){
     .wrap{ max-width: 100%; margin: 12px auto 72px; padding: 0 8px; }
-    .sheet{ border-radius:12px; }
+    .sheet{ border-radius:12px; padding:12px; }
     .toTop{ right:12px; bottom:12px; padding:10px 12px; }
+    :root{ --gap:16px; --radius:12px; }
   }
 </style>
 </head>
@@ -79,13 +106,27 @@
 
   <main class="wrap">
     <div class="sheet">
-      <!-- ✅ 保留原本活動圖 -->
-      <img src="images/event.png" alt="Kiwigo 活動 DM" loading="eager">
 
-      <!-- ✅ 新增三張活動圖 -->
-      <img src="images/10event1.png" alt="Kiwigo 活動 1" loading="lazy">
-      <img src="images/10event2.png" alt="Kiwigo 活動 2" loading="lazy">
-      <img src="images/10event3.png" alt="Kiwigo 活動 3" loading="lazy">
+      <!-- ✅ 1. 保留原本 event.png（變成獨立卡片） -->
+      <figure class="event-card">
+        <img src="images/event.png" alt="Kiwigo 活動 DM" loading="eager">
+      </figure>
+
+      <!-- ✅ 2. 新活動 1 -->
+      <figure class="event-card">
+        <img src="images/10event1.png" alt="Kiwigo 活動 1" loading="lazy">
+      </figure>
+
+      <!-- ✅ 3. 新活動 2 -->
+      <figure class="event-card">
+        <img src="images/10event2.png" alt="Kiwigo 活動 2" loading="lazy">
+      </figure>
+
+      <!-- ✅ 4. 新活動 3 -->
+      <figure class="event-card">
+        <img src="images/10event3.png" alt="Kiwigo 活動 3" loading="lazy">
+      </figure>
+
     </div>
   </main>
 
